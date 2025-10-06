@@ -3,8 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Helmond Clock & News</title>
+  <title>Helmond Company News</title>
+
+  <!-- 🔧 HOW TO UPDATE THIS PAGE 🔧
+       ✅ Change background image:
+          → Go to the CSS section under ":root"
+          → Replace the URL in --background-url
+
+       ✅ Update news text:
+          → Scroll to <div class="news-container">
+          → Edit the <h1> and <p> tags with your own content
+
+       ❌ DO NOT delete any tags or style blocks
+  -->
+
   <style>
+    :root {
+      --background-url: url("https://raw.githubusercontent.com/dens-narrowcasting/dens-narrowcasting.github.io/refs/heads/main/dens_powerhub.png"); /* ← Swap image here */
+    }
+
     body, html {
       margin: 0;
       padding: 0;
@@ -18,6 +35,7 @@
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
+      background-image: var(--background-url);
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -32,27 +50,6 @@
       width: 23vw;
       height: auto;
       z-index: 1;
-    }
-
-    .info-container {
-      position: absolute;
-      bottom: 3vh;
-      left: 3vw;
-      background: rgba(0, 0, 0, 0.55);
-      padding: 2.5vh 3vw;
-      border-radius: 1vw;
-      font-size: 1.3vw;
-      line-height: 1.6em;
-      box-shadow: 0 0 2vw rgba(0, 0, 0, 0.4);
-      z-index: 2;
-    }
-
-    .time { font-size: 2.5vw; font-weight: bold; }
-    .date { font-size: 1.2vw; margin-top: 0.8vh; }
-    .week { font-size: 1.1vw; margin-top: 0.5vh; }
-    .weather { font-size: 1.2vw; margin-top: 1vh; line-height: 1.5em; }
-    .time, .date, .week, .weather {
-      text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
     }
 
     .news-container {
@@ -80,94 +77,19 @@
     @media (max-width: 768px) {
       .news-container { font-size: 3vw; padding: 4vh 4vw; }
       .news-container h1 { font-size: 4vw; }
-      .info-container { font-size: 3vw; max-width: 90vw; }
     }
   </style>
 </head>
 <body>
-  <div class="image-bg" id="bg"></div>
+  <div class="image-bg"></div>
+
+  <!-- ✅ Company logo -->
   <img class="logo" src="https://www.dens.one/wp-content/uploads/2024/06/dens-logo-white.svg" alt="DENS Logo">
 
-  <div class="news-container" id="news">
-    <h1>Loading News...</h1>
-    <p>Please wait while we fetch the latest update.</p>
+  <!-- ✅ Company News Section -->
+  <div class="news-container">
+    <h1>Titel</h1>
+    <p>Subtekst</p>
   </div>
-
-  <div class="info-container">
-    <div class="time" id="time"></div>
-    <div class="date" id="date"></div>
-    <div class="week" id="week"></div>
-    <div class="weather" id="weather"></div>
-  </div>
-
-  <script>
-    // Load background image
-    document.getElementById('bg').style.backgroundImage =
-      'url("https://raw.githubusercontent.com/xNimus1/test_1_2_3/content/background.jpg")';
-
-    // Load news text
-    fetch('https://raw.githubusercontent.com/xNimus1/test_1_2_3/content/news.txt')
-      .then(response => response.text())
-      .then(text => {
-        const lines = text.trim().split('\n');
-        const title = lines[0] || "Company News";
-        const body = lines.slice(1).join('<br>');
-        document.getElementById('news').innerHTML = `<h1>${title}</h1><p>${body}</p>`;
-      })
-      .catch(() => {
-        document.getElementById('news').innerHTML = `<h1>News Unavailable</h1><p>Unable to load news content.</p>`;
-      });
-
-    // Clock and date
-    function updateClock() {
-      const now = new Date();
-      const options = { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-      const timeString = new Intl.DateTimeFormat('en-GB', options).format(now);
-      const dateOptions = { timeZone: 'Europe/Amsterdam', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const dateString = new Intl.DateTimeFormat('en-GB', dateOptions).format(now);
-      const amsNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' }));
-      const jan1 = new Date(amsNow.getFullYear(), 0, 1);
-      const days = Math.floor((amsNow - jan1) / (24 * 60 * 60 * 1000));
-      const weekNumber = Math.ceil((days + jan1.getDay() + 1) / 7);
-      document.getElementById('time').textContent = timeString;
-      document.getElementById('date').textContent = dateString;
-      document.getElementById('week').textContent = `Week ${weekNumber}`;
-    }
-
-    // Weather
-    async function updateWeather() {
-      const lat = 51.479;
-      const lon = 5.661;
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weathercode&timezone=Europe%2FAmsterdam`;
-      try {
-        const response = await fetch(url);
-        const data = await response.json();
-        const current = data.current;
-        const temp = current.temperature_2m;
-        const feels = current.apparent_temperature;
-        const humidity = current.relative_humidity_2m;
-        const code = current.weathercode;
-        const { description, emoji } = getWeatherDescription(code);
-        const weatherText = `${emoji} Helmond: ${description}, ${temp}°C (feels like ${feels}°C), humidity ${humidity}%`;
-        document.getElementById('weather').textContent = weatherText;
-      } catch (error) {
-        document.getElementById('weather').textContent = "🌐 Weather data not available.";
-      }
-    }
-
-    function getWeatherDescription(code) {
-      const map = {
-        0: { description: "Clear sky", emoji: "☀️" },
-        1: { description: "Mainly clear", emoji: "🌤️" },
-        2: { description: "Partly cloudy", emoji: "⛅" },
-        3: { description: "Overcast", emoji: "☁️" },
-        45: { description: "Fog", emoji: "🌫️" },
-        48: { description: "Freezing fog", emoji: "🌫️❄️" },
-        51: { description: "Light drizzle", emoji: "🌦️" },
-        53: { description: "Drizzle", emoji: "🌦️" },
-        55: { description: "Dense drizzle", emoji: "🌧️" },
-        61: { description: "Light rain", emoji: "🌦️" },
-        63: { description: "Rain", emoji: "🌧️" },
-        65: { description: "Heavy rain", emoji: "🌧️💧" },
-        71: { description: "Light snow", emoji: "🌨️" },
-        73: { description: "Snow", emoji: "❄️"
+</body>
+</html>
