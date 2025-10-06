@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Helmond Clock & Weather</title>
+  <style>
+    :root {
+      --background-url: url("https://raw.githubusercontent.com/dens-narrowcasting/dens-narrowcasting.github.io/refs/heads/main/dens_powerhub.png"); /* ← Swap image here */
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+    }
+
+    .image-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-image: var(--background-url);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -1;
+      filter: brightness(0.8);
+    }
+
+    .logo {
+      position: absolute;
+      top: 2.5vh;
+      right: 2.5vw;
+      width: 23vw;
+      height: auto;
+      z-index: 1;
+    }
+
+    .info-container {
+      position: absolute;
+      bottom: 3vh;
+      left: 3vw;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 2.5vh 3vw;
+      border-radius: 1vw;
+      font-size: 1.3vw;
+      line-height: 1.6em;
+      box-shadow: 0 0 2vw rgba(0, 0, 0, 0.4);
+    }
+
+    .time { font-size: 2.5vw; font-weight: bold; }
+    .date { font-size: 1.2vw; margin-top: 0.8vh; }
+    .week { font-size: 1.1vw; margin-top: 0.5vh; }
+    .weather { font-size: 1.2vw; margin-top: 1vh; line-height: 1.5em; }
+    .time, .date, .week, .weather {
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .news-container {
+      position: absolute;
+      top: 10vh;
+      left: 5vw;
+      right: 5vw;
+      max-width: 1200px;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 3vh 3vw;
+      border-radius: 1vw;
+      font-size: 1.5vw;
+      line-height: 1.6;
+      box-shadow: 0 0 2vw rgba(0,0,0,0.5);
+      z-index: 2;
+    }
+
+    .news-container h1 {
+      margin-top: 0;
+      font-size: 2.5vw;
+      font-weight: 700;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+    }
+
+    @media (max-width: 768px) {
+      .news-container { font-size: 3vw; padding: 4vh 4vw; }
+      .news-container h1 { font-size: 4vw; }
+      .info-container { font-size: 3vw; max-width: 90vw; }
+    }
+  </style>
+</head>
+<body>
+  <div class="image-bg"></div>
+  <img class="logo" src="https://www.dens.one/wp-content/uploads/2024/06/dens-logo-white.svg" alt="DENS Logo">
+
+  <div class="news-container">
+    <h1>Company News Update</h1>
+    <p>We’re thrilled to announce the launch of our new energy platform, designed to revolutionize how businesses manage power.</p>
+    <p>Stay tuned for more updates and innovations coming your way!</p>
+  </div>
+
+  <div class="info-container">
+    <div class="time" id="time"></div>
+    <div class="date" id="date"></div>
+    <div class="week" id="week"></div>
+    <div class="weather" id="weather"></div>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const options = { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+      const timeString = new Intl.DateTimeFormat('en-GB', options).format(now);
+      const dateOptions = { timeZone: 'Europe/Amsterdam', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateString = new Intl.DateTimeFormat('en-GB', dateOptions).format(now);
+      const amsNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Amsterdam' }));
+      const jan1 = new Date(amsNow.getFullYear(), 0, 1);
+      const days = Math.floor((amsNow - jan1) / (24 * 60 * 60 * 1000));
+      const weekNumber = Math.ceil((days + jan1.getDay() + 1) / 7);
+      document.getElementById('time').textContent = timeString;
+      document.getElementById('date').textContent = dateString;
+      document.getElementById('week').textContent = `Week ${weekNumber}`;
+    }
+
+    async function updateWeather() {
+      const lat = 51.479;
+      const lon = 5.661;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weathercode&timezone=Europe%2FAmsterdam`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const current = data.current;
+        const temp = current.temperature_2m;
+        const feels = current.apparent_temperature;
+        const humidity = current.relative_humidity_2m;
+        const code = current.weathercode;
+        const { description, emoji } = getWeatherDescription(code);
+        const weatherText = `${emoji} Helmond: ${description}, ${temp}°C (feels like ${feels}°C), humidity ${humidity}%`;
+        document.getElementById('weather').textContent = weatherText;
+      } catch (error) {
+        document.getElementById('weather').textContent = "🌐 Weather data not available.";
+      }
+    }
+
+    function getWeatherDescription(code) {
+      const map = {
+        0: { description: "Clear sky", emoji: "☀️" },
+        1: { description: "Mainly clear", emoji: "🌤️" },
+        2: { description: "Partly cloudy", emoji: "⛅" },
+        3: { description: "Overcast", emoji: "☁️" },
+        45: { description: "Fog", emoji: "🌫️" },
+        48: { description: "Freezing fog", emoji: "🌫️❄️" },
+        51: { description: "Light drizzle", emoji: "🌦️" },
+        53: { description: "Drizzle", emoji: "🌦️" },
+        55: { description: "Dense drizzle", emoji: "🌧️" },
+        61: { description: "Light rain", emoji: "🌦️" },
+        63: { description: "Rain", emoji: "🌧️" },
+        65: { description: "Heavy rain", emoji: "🌧️💧" },
+        71: { description: "Light snow", emoji: "🌨️" },
+        73: { description: "Snow", emoji: "❄️" },
+        75: { description: "Heavy snow", emoji: "❄️🌨️" },
+        80: { description: "Light showers", emoji: "🌦️" },
+        81: { description: "Showers", emoji: "🌧️" },
+        82: { description: "Heavy showers", emoji: "🌧️💦" }
+      };
+      return map[code] || { description: "Unknown weather", emoji: "❔" };
+    }
+
+    setInterval(updateClock, 1000);
+    setInterval(updateWeather, 600000);
+    updateClock();
+    updateWeather();
+  </script>
+</body>
+</html>
